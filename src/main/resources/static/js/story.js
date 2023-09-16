@@ -1,12 +1,6 @@
-/**
-	2. 스토리 페이지
-	(1) 스토리 로드하기
-	(2) 스토리 스크롤 페이징하기
-	(3) 좋아요, 안좋아요
-	(4) 댓글쓰기
-	(5) 댓글삭제
- */
+// (0) 현재 로그인한 사용자 아이디
 
+let principalId = $("#principalId").val();
 
 // (1) 스토리 로드하기
 
@@ -85,21 +79,36 @@ function getStoryItem(image) {
 	
 	<p>${image.caption}</p>
 	</div>
-	<div id="storyCommentList-${image.id}">
-	<div class="sl__item__contents__comment" id="storyCommentItem-1"">
-	<p>
-	<b>Lovely :</b> 부럽습니다
-	</p>
-	<button>
-	<i class="fas fa-times"></i>
-	</button>
+	<div id="storyCommentList-${image.id}">`;
+	
+	image.comments.forEach((comment)=> {
+	
+		item += `<div class="sl__item__contents__comment" id="storyCommentItem-${comment.id}">
+		<p>
+			<b>${comment.user.username} :</b> ${comment.content}
+		</p>`;
+		
+		if(principalId == comment.user.id){
+			item += `<button onclick="deleteComment(${comment.id})">
+						<i class="fas fa-times"></i>
+					</button>`;
+		
+		}
+		
+		item += `		
+		</div>`;
+	});
+	
+	
+	item +=`
 	</div>
-	</div>
-	<div class="sl__item__input">
-	<input type="text" placeholder="댓글 달기" id="storyCommentInput-${image.id}" />
-	<button type="button" onClick="addComment(${image.id})">등록</button>
-	</div>
-	</div>
+	
+		<div class="sl__item__input">
+				<input type="text" placeholder="댓글 달기" id="storyCommentInput-${image.id}" />
+			<button type="button" onClick="addComment(${image.id})">등록</button>
+			</div>
+		</div>
+	
 	</div>`;
 
 	return item;
@@ -170,25 +179,42 @@ function addComment(imageId) {
 		dataType: "json"
 	}).done(res => {
 		console.log("comment 성공", res)
+
+		let comment = res.data;
+
+		let content = `
+			  <div class="sl__item__contents__comment" id="storyCommentItem-${comment.id}"> 
+			    <p>
+			      <b>${comment.user.username} :</b>
+			      ${comment.content}
+			    </p>
+			    
+			    
+			    <button onclick="deleteComment(${comment.id})"><i class="fas fa-times"></i></button>
+			  </div>
+	`;
+		commentList.prepend(content);
+
 	}).fail(error => {
 		console.log("comment 오류", error);
 	});
 
-	let content = `
-			  <div class="sl__item__contents__comment" id="storyCommentItem-2""> 
-			    <p>
-			      <b>GilDong :</b>
-			      댓글 샘플입니다.
-			    </p>
-			    <button><i class="fas fa-times"></i></button>
-			  </div>
-	`;
-	commentList.prepend(content);
-	commentInput.val("");
+
+	commentInput.val(""); // 인풋 필드를 꺠끗하게 비워줌
 }
 
 // (5) 댓글 삭제
-function deleteComment() {
+function deleteComment(commentId) {
+	$.ajax({
+		type: "delete",
+		url: `/api/comment/${commentId}`,
+		dataType: "json"
+	}).done(res=>{
+		console.lof("댓글 삭제 성공", res);
+		$(`#storyCommentItem-${commentId}`).remove();
+	}).fail(error=>{
+		console.log("댓글 삭제 실패", error);
+	});
 
 }
 
